@@ -36,9 +36,11 @@ public class ChessGame extends AbstractGame {
     }
 
     boolean gameOver(){
-        int redChess=0, blackChess=0, x, y, xChess, yChess, redCannotMove=0, blackCannotMove=0;
+        int redChess=0, blackChess=0, moveSpace, redCannotMove=0, blackCannotMove=0;
+        int[] num={-1, 1, -10, 10};
         ArrayList<Chess> redLast=new ArrayList<>(); // 剩下的紅棋
         ArrayList<Chess> blackLast=new ArrayList<>(); // 剩下的黑棋
+
         for(int i=0;i<4;i++){
             for(int j=0;j<8;j++){
                 if(chessBoard[i][j].live){
@@ -66,18 +68,12 @@ public class ChessGame extends AbstractGame {
             return true;
         }
         else{
-            for(int i=0;i<redLast.size();i++){
-                if(redLast.get(i).getWeight()==2){
-                    x=redLast.get(i).loc/10;
-                    y=redLast.get(i).loc%10;
-                    xChess=0;
-                    yChess=0;
-                    for(int j=0;j<8;j++){
-                        if(j<4&&j!=x&&chessBoard[j][y].live)xChess++;
-                        if(j!=y&&chessBoard[x][j].live)yChess++;
-                    }
-                    if(xChess<2&&yChess<2)redCannotMove++;
+            for(Chess r:redLast){
+                moveSpace=0;
+                for(int n:num){
+                    if(move(r.getLoc()+n))moveSpace++;
                 }
+                if(moveSpace==0)redCannotMove++;
             }
             if(redCannotMove==redLast.size()){
                 System.out.println("Game Over!");
@@ -86,18 +82,12 @@ public class ChessGame extends AbstractGame {
                 return true;
             }
 
-            for(int i=0;i<blackLast.size();i++){
-                if(blackLast.get(i).getWeight()==2){
-                    x=blackLast.get(i).loc/10;
-                    y=blackLast.get(i).loc%10;
-                    xChess=0;
-                    yChess=0;
-                    for(int j=0;j<8;j++){
-                        if(j<4&&j!=x&&chessBoard[j][y].live)xChess++;
-                        if(j!=y&&chessBoard[x][j].live)yChess++;
-                    }
-                    if(xChess<2&&yChess<2)blackCannotMove++;
+            for(Chess b:blackLast){
+                moveSpace=0;
+                for(int n:num){
+                    if(move(b.getLoc()+n))moveSpace++;
                 }
+                if(moveSpace==0)blackCannotMove++;
             }
             if(blackCannotMove==blackLast.size()){
                 System.out.println("Game Over!");
@@ -119,7 +109,7 @@ public class ChessGame extends AbstractGame {
     boolean move(int location){
         int iBefore=currentChess.getLoc()/10, jBefore= currentChess.getLoc()%10;
         int iAfter=location/10, jAfter=location%10, dx, dy;
-        if(iAfter>3||jAfter>7)return false;
+        if(iAfter>3||jAfter>7||iAfter<0||jAfter<0)return false;
         target=chessBoard[iAfter][jAfter];
         if(currentChess.show==target.show){
             if(currentChess.getWeight()!=2){

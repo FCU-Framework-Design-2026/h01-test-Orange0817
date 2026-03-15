@@ -1,17 +1,53 @@
 package org.example;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import java.util.Scanner;
+
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+        System.out.println("暗棋遊戲");
+
+        Player[] players=new Player[2];
+        int p=0;
+        System.out.print("請輸入一號玩家名稱: ");
+        Scanner sc=new Scanner(System.in);
+        players[0]=new Player(sc.next());
+        System.out.print("請輸入二號玩家名稱: ");
+        players[1]=new Player(sc.next());
+
+        System.out.println("\n================== 遊戲開始 ====================");
+        ChessGame game=new ChessGame();
+        game.generateChess();
+
+        // 第一次選棋子決定玩家紅黑方
+        game.showAllChess();
+        System.out.printf("\n%s 請輸入所選棋子的位置: ", players[p++].getName());
+        String chessLoc=sc.next();
+        int i=chessLoc.charAt(0)-'A', j=chessLoc.charAt(1)-'1';
+        game.chessShow(i*10+j);
+        game.setPlayer(players[0], players[1]);
+
+        while(game.gameOver()){
+            game.showAllChess();
+            System.out.printf("\n%s 請輸入所選棋子的位置: ", players[p].getName());
+            chessLoc=sc.next();
+            i=chessLoc.charAt(0)-'A';
+            j=chessLoc.charAt(1)-'1';
+            if(game.chessShow(i*10+j)){
+                System.out.printf("\n%s 請輸入目的位置: ", players[p].getName());
+                chessLoc=sc.next();
+                i=chessLoc.charAt(0)-'A';
+                j=chessLoc.charAt(1)-'1';
+                while(!game.move(i*10+j)){
+                    System.out.print("\n無法移動到該位置，請重新輸入目的位置: ");
+                    chessLoc=sc.next();
+                    i=chessLoc.charAt(0)-'A';
+                    j=chessLoc.charAt(1)-'1';
+                }
+            }
+
+            p=1-p; // 換另一個人下棋
         }
     }
+
 }

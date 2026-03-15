@@ -184,7 +184,10 @@ public class ChessGame extends AbstractGame {
                     swap(iBefore, jBefore, iAfter, jAfter);
                     return true;
                 }
-//                return false;
+                if(Math.abs(dx)+Math.abs(dy)==1&&!target.live){
+                    swap(iBefore, jBefore, iAfter, jAfter);
+                    return true;
+                } // 上下左右移動
             }
         }
         return false;

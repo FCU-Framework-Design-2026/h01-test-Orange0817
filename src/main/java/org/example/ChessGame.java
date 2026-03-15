@@ -12,8 +12,9 @@ abstract class AbstractGame {
 public class ChessGame extends AbstractGame {
 
     int tmp=0, first=0;
-    Chess currentChess;
+    Chess currentChess, target;
     String playerSide="";
+    Player[] p=new Player[2];
 //    String[] loc=new String[32];
     private ArrayList<Integer> loc=new ArrayList<>();
     public Chess[][] chessBoard=new Chess[4][8];
@@ -30,16 +31,163 @@ public class ChessGame extends AbstractGame {
             p2.setSide("Red");
             playerSide+="Red";
         }
-
+        p[0]=p1;
+        p[1]=p2;
     }
 
     boolean gameOver(){
+        int redChess=0, blackChess=0, x, y, xChess, yChess, redCannotMove=0, blackCannotMove=0;
+        ArrayList<Chess> redLast=new ArrayList<>(); // 剩下的紅棋
+        ArrayList<Chess> blackLast=new ArrayList<>(); // 剩下的黑棋
+        for(int i=0;i<4;i++){
+            for(int j=0;j<8;j++){
+                if(chessBoard[i][j].live){
+                    if(chessBoard[i][j].getSide().equals("Red")){
+                        redChess++;
+                        redLast.add(chessBoard[i][j]);
+                    }
+                    else {
+                        blackChess++;
+                        blackLast.add(chessBoard[i][j]);
+                    }
+                }
+            }
+        }
+        if(redChess==0||blackChess==0){
+            System.out.println("Game Over!");
+            if(redChess==0){
+                if(p[0].getSide().equals("Black"))System.out.println(p[0].getName()+" 勝利!");
+                else System.out.println(p[1].getName()+" 勝利!");
+            }
+            else{
+                if(p[0].getSide().equals("Red"))System.out.println(p[0].getName()+" 勝利!");
+                else System.out.println(p[1].getName()+" 勝利!");
+            }
+            return true;
+        }
+        else{
+            for(int i=0;i<redLast.size();i++){
+                if(redLast.get(i).getWeight()==2){
+                    x=redLast.get(i).loc/10;
+                    y=redLast.get(i).loc%10;
+                    xChess=0;
+                    yChess=0;
+                    for(int j=0;j<8;j++){
+                        if(j<4&&j!=x&&chessBoard[j][y].live)xChess++;
+                        if(j!=y&&chessBoard[x][j].live)yChess++;
+                    }
+                    if(xChess<2&&yChess<2)redCannotMove++;
+                }
+            }
+            if(redCannotMove==redLast.size()){
+                System.out.println("Game Over!");
+                if(p[0].getSide().equals("Black"))System.out.println(p[0].getName()+" 勝利!");
+                else System.out.println(p[1].getName()+" 勝利!");
+                return true;
+            }
 
-        return true;
+            for(int i=0;i<blackLast.size();i++){
+                if(blackLast.get(i).getWeight()==2){
+                    x=blackLast.get(i).loc/10;
+                    y=blackLast.get(i).loc%10;
+                    xChess=0;
+                    yChess=0;
+                    for(int j=0;j<8;j++){
+                        if(j<4&&j!=x&&chessBoard[j][y].live)xChess++;
+                        if(j!=y&&chessBoard[x][j].live)yChess++;
+                    }
+                    if(xChess<2&&yChess<2)blackCannotMove++;
+                }
+            }
+            if(blackCannotMove==blackLast.size()){
+                System.out.println("Game Over!");
+                if(p[0].getSide().equals("Red"))System.out.println(p[0].getName()+" 勝利!");
+                else System.out.println(p[1].getName()+" 勝利!");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void swap(int iBefore, int jBefore, int iAfter, int jAfter){
+        int tmp=currentChess.getLoc();
+        currentChess.loc=target.loc;
+        target.loc=tmp;
+        chessBoard[iBefore][jBefore]=target;
+        chessBoard[iAfter][jAfter]=currentChess;
     }
     boolean move(int location){
+        int iBefore=currentChess.getLoc()/10, jBefore= currentChess.getLoc()%10;
+        int iAfter=location/10, jAfter=location%10, dx, dy;
+        if(iAfter>3||jAfter>7)return false;
+        target=chessBoard[iAfter][jAfter];
+        if(currentChess.show==target.show){
+            if(currentChess.getWeight()!=2){
+                dx=Math.abs(iAfter-iBefore);
+                dy=Math.abs(jAfter-jBefore);
+                if(dx+dy==1){
+                    if(!target.live) {
+                        swap(iBefore, jBefore, iAfter, jAfter);
+                        return true;
+                    }
+                    else{
+                        if(!currentChess.getSide().equals(target.getSide())){
+                            boolean boss=currentChess.getWeight()==7&&target.getWeight()!=1,
+                                    highWeight=currentChess.getWeight()>=target.getWeight(),
+                                    eatBoss=currentChess.getWeight()==1&&target.getWeight()==7,
+                                    bossCannot=currentChess.getWeight()==7&&target.getWeight()==1;
+//                            System.out.print(boss+" ");
+//                            System.out.print(highWeight+" ");
+//                            System.out.print(eatBoss+" ");
+//                            System.out.println(bossCannot);
+                            if((boss||highWeight||eatBoss)&&!bossCannot){
+                                target.live=false;
+                                swap(iBefore, jBefore, iAfter, jAfter);
+                                return true;
+                            }
 
-        return true;
+                        }
+                    }
+
+                }
+            }
+            else{ // 炮的規定
+                int obstacle=0;
+                dx=iBefore-iAfter;
+                dy=jBefore-jAfter;
+                if(dx==0&&(dy>1||dy<-1)){
+                    if(dy<-1){
+                        for(int i=jBefore+1;i<jAfter;i++){
+                            if(chessBoard[iBefore][i].live)obstacle++;
+                        }
+                    }
+                    else{
+                        for(int i=jBefore-1;i>jAfter;i--){
+                            if(chessBoard[iBefore][i].live)obstacle++;
+                        }
+                    }
+                }
+                else if((dx>1||dx<-1)&&dy==0){
+                    if(dx<-1){
+                        for(int i=iBefore+1;i<iAfter;i++){
+                            if(chessBoard[i][jBefore].live)obstacle++;
+                        }
+                    }
+                    else{
+                        for(int i=iBefore-1;i>iAfter;i--){
+                            if(chessBoard[i][jBefore].live)obstacle++;
+                        }
+                    }
+                }
+                if(obstacle==1&&target.live){
+                    target.live=false;
+                    swap(iBefore, jBefore, iAfter, jAfter);
+                    return true;
+                }
+//                return false;
+            }
+        }
+        return false;
     }
     void showAllChess(){
         System.out.print("   ");
@@ -96,12 +244,32 @@ public class ChessGame extends AbstractGame {
     boolean chessShow(int location){
         currentChess=chessBoard[location/10][location%10];
 
-        if(chessBoard[location/10][location%10].show){
-            return true;
+        if(currentChess.show){
+            return true; // 移動
         }
         else{
-            chessBoard[location/10][location%10].show=true;
-            return false;
+            currentChess.show=true;
+            if(first==0)first++;
+            return false; // 翻開
         }
+    }
+
+    boolean checkInputCurrentChess(String input, Player player){
+        if(input.length()!=2)return true;
+        int i=input.charAt(0)-'A', j=input.charAt(1)-'1';
+        if(i>3||j>7)return true;
+        if(first!=0&&chessBoard[i][j].show){
+            if(!chessBoard[i][j].getSide().equals(player.getSide()))return true;
+        }
+        if(!chessBoard[i][j].live)return true; // 死掉的不能選
+        return false;
+    }
+
+    boolean checkInputTarget(String input, Player player){
+        if(input.length()!=2)return true;
+        int i=input.charAt(0)-'A', j=input.charAt(1)-'1';
+        if(i>3||j>7)return true;
+
+        return false;
     }
 }

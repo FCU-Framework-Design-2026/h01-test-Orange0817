@@ -15,7 +15,7 @@ public class Chess {
 
     @Override
     public String toString() {
-        if(show)
+        if(show&&live)
         {
             if(side.equals("Red")){
                 return "["+name+"]";

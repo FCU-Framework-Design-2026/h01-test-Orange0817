@@ -23,24 +23,54 @@ public class Main {
         game.showAllChess();
         System.out.printf("\n%s 請輸入所選棋子的位置: ", players[p++].getName());
         String chessLoc=sc.next();
-        int i=chessLoc.charAt(0)-'A', j=chessLoc.charAt(1)-'1';
-        game.chessShow(i*10+j);
+        int i, j;
+        while(game.checkInputCurrentChess(chessLoc, players[0])){
+            System.out.print("\n錯誤，請重新輸入所選棋子的位置: ");
+            chessLoc=sc.next();
+            if(chessLoc.equals("esc")){
+                p=1-p;
+                break;
+            }
+        }
+        i=chessLoc.charAt(0)-'A';
+        j=chessLoc.charAt(1)-'1';
+        game.chessShow(i*10+j); // 翻棋
         game.setPlayer(players[0], players[1]);
 
-        while(game.gameOver()){
+        while(!game.gameOver()){
             game.showAllChess();
             System.out.printf("\n%s 請輸入所選棋子的位置: ", players[p].getName());
             chessLoc=sc.next();
+            while(game.checkInputCurrentChess(chessLoc, players[p])){
+                System.out.print("\n錯誤，請重新輸入所選棋子的位置: ");
+                chessLoc=sc.next();
+                if(chessLoc.equals("esc")){
+                    p=1-p;
+                    break;
+                }
+            }
             i=chessLoc.charAt(0)-'A';
             j=chessLoc.charAt(1)-'1';
             if(game.chessShow(i*10+j)){
                 System.out.printf("\n%s 請輸入目的位置: ", players[p].getName());
                 chessLoc=sc.next();
+                while(game.checkInputTarget(chessLoc, players[p])){
+                    System.out.print("\n錯誤，請重新輸入目的位置: ");
+                    chessLoc=sc.next();
+                }
                 i=chessLoc.charAt(0)-'A';
                 j=chessLoc.charAt(1)-'1';
                 while(!game.move(i*10+j)){
                     System.out.print("\n無法移動到該位置，請重新輸入目的位置: ");
                     chessLoc=sc.next();
+                    if(chessLoc.equals("esc")){
+                        p=1-p;
+                        break;
+                    }
+                    while(game.checkInputTarget(chessLoc, players[p])){
+                        System.out.print("\n錯誤，請重新輸入目的位置: ");
+                        chessLoc=sc.next();
+                    }
                     i=chessLoc.charAt(0)-'A';
                     j=chessLoc.charAt(1)-'1';
                 }

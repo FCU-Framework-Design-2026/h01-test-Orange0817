@@ -50,17 +50,344 @@
 
 ## 程式、執行畫面及其說明
 
-迴圈的內容如下：
-
+### Chess
+* 建構子
 ```java
-for (int i = 1; i <= 5; i++) {
-    System.out.println("i = " + i);
+String name, side;
+int weight, loc;
+boolean show=false, live=true; // 有沒有被翻開、吃掉
+Chess(String name, int weight, String side, int loc) {
+    this.name=name;
+    this.weight=weight;
+    this.side=side;
+    this.loc=loc;
 }
 ```
 
-每一次，i 的值會變化。執行的畫面如下：
+* toString
+```java
+public String toString(){
+        if(show&&live)
+        {
+            if(side.equals("Red")){
+                return "["+name+"]";
+            }
+            else
+                return "{"+name+"}";
+        }
+        else if(live)
+            return " Ｘ ";
+        else
+            return " － ";
+    }
+```
 
-![](img/image.png)
+### Player
+```java
+public class Player {
+    String name, side;
+    Player(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setSide(String side) {
+        this.side=side;
+    }
+    public String getSide() {
+        return side;
+    }
+}
+```
+
+### ChessGame
+* 變數
+```java
+Chess currentChess, target; // 選擇的棋子&目的地
+String playerSide=""; // 顯示誰是紅黑方
+Player[] p=new Player[2];
+private ArrayList<Integer> loc=new ArrayList<>(); // 先生成座標"00"~"37"然後讓list隨機排列
+public Chess[][] chessBoard=new Chess[4][8]; // 棋盤
+```
+* setPlayer
+```java
+void setPlayer(Player p1, Player p2){
+        p1.setSide(currentChess.getSide());
+        playerSide=p1.getName()+": "+currentChess.getSide()+", "+p2.getName()+": ";
+        if(currentChess.getSide().equals("Red")){
+            p2.setSide("Black");
+            playerSide+="Black";
+        }
+        else{
+            p2.setSide("Red");
+            playerSide+="Red";
+        }
+        p[0]=p1;
+        p[1]=p2;
+    }
+```
+* gameOver (內容過多，不全部顯示)
+    1. 先檢查還有沒有棋子，如果有一方沒有任何棋子，則另一方獲得勝利
+    2. 檢查的同時把所有剩下的棋子都放進list
+    3. 檢查每個剩下的棋子是否至少能往上下左右其中一個方向移動
+    4. 如果所有剩下的棋子都無法移動，則判定另一方勝利
+```java
+boolean gameOver(){
+    int redChess=0, blackChess=0, x, y, xChess, yChess, redCannotMove=0, blackCannotMove=0;
+    ArrayList<Chess> redLast=new ArrayList<>(); // 剩下的紅棋
+    ArrayList<Chess> blackLast=new ArrayList<>(); // 剩下的黑棋
+    for(int i=0;i<4;i++){
+        for(int j=0;j<8;j++){
+            if(chessBoard[i][j].live){
+                if(chessBoard[i][j].getSide().equals("Red")){
+                    redChess++; // 棋子還活著就 +1
+                    redLast.add(chessBoard[i][j]);
+                }
+                else {
+                    blackChess++;
+                    blackLast.add(chessBoard[i][j]);
+                }
+            }
+        }
+    }
+    if(redChess==0||blackChess==0){
+        System.out.println("Game Over!");
+        ... // 如果是紅方沒棋子則黑方勝利，反之則紅方勝
+        return true;
+    }
+    else{
+        // 紅棋檢查
+        for(int i=0;i<redLast.size();i++){
+            ... // 檢查每個棋子是否能上下左右移動
+        }
+        if(redCannotMove==redLast.size()){
+            ... // 如果所有剩餘的棋子都不能移動則黑方勝利
+        }
+        ... // 黑棋檢查
+    }
+    return false;
+}
+```
+* swap & move (內容過多，不全部顯示)
+    1. 檢查棋子是否能朝該目的座標移動 (比較棋子階級&移動距離是否正常&炮的額外判定)
+    2. 若可以移動則使用swap來讓兩個棋子交換
+    3. 因為toString會判定棋子的顯示方法，所以交換後棋子原本的座標會顯示 ```"－"```
+```java
+void swap(int iBefore, int jBefore, int iAfter, int jAfter){
+    int tmp=currentChess.getLoc();
+    currentChess.loc=target.loc;
+    target.loc=tmp;
+    chessBoard[iBefore][jBefore]=target;
+    chessBoard[iAfter][jAfter]=currentChess;
+}
+boolean move(int location){
+    int iBefore=currentChess.getLoc()/10, jBefore= currentChess.getLoc()%10;
+    int iAfter=location/10, jAfter=location%10, dx, dy;
+    if(iAfter>3||jAfter>7||iAfter<0||jAfter<0)return false;
+    target=chessBoard[iAfter][jAfter];
+    if(currentChess.show==target.show){
+        if(currentChess.getWeight()!=2){
+            dx=Math.abs(iAfter-iBefore);
+            dy=Math.abs(jAfter-jBefore);
+            if(dx+dy==1){
+                if(!target.live) {
+                    swap(iBefore, jBefore, iAfter, jAfter);
+                    return true;
+                }
+                else{
+                    if(!currentChess.getSide().equals(target.getSide())){
+                        boolean boss=currentChess.getWeight()==7&&target.getWeight()!=1,
+                                highWeight=currentChess.getWeight()>=target.getWeight(),
+                                eatBoss=currentChess.getWeight()==1&&target.getWeight()==7,
+                                bossCannot=currentChess.getWeight()==7&&target.getWeight()==1;
+                        if((boss||highWeight||eatBoss)&&!bossCannot){
+                            target.live=false;
+                            swap(iBefore, jBefore, iAfter, jAfter);
+                            return true;
+                        }
+
+                    }
+                }
+
+            }
+        }
+        else{ // 炮的額外判定，確認與目的座標之間只有一個棋子即可移動 
+            ...
+        }
+    }
+    return false;
+}
+```
+* showAllChess: 顯示當前棋盤與玩家紅黑方
+```java
+void showAllChess(){
+        System.out.print("   ");
+        String s="１２３４５６７８";
+        for(int i=0;i<8;i++)
+            System.out.printf("  %c  ", s.charAt(i));
+        System.out.println();
+        for(int i=0;i<4;i++) {
+            System.out.printf("%c  ", 'A'+i);
+            for(int j=0;j<8;j++){
+                System.out.printf(" %s ", chessBoard[i][j].toString());
+            }
+            System.out.println();
+        }
+        System.out.println("-----------------------------------------------");
+        if(!playerSide.isEmpty())System.out.println(playerSide);
+    }
+```
+顯示畫面:
+
+![](img/棋盤顯示.png)
+
+* generateChess
+    1. 隨機生成每個棋子位置與設定棋子名稱、階級、陣營等
+    2. 帥/將 ~ 兵/卒 對應階級為 7 ~ 1
+```java
+void generateChess(){
+        for(int i=0;i<4;i++){ // 生成 00 ~ 37 (A 對應 0，D 對應 3)
+            for(int j=0;j<8;j++) {
+                loc.add(i*10+j);
+            }
+        }
+        Collections.shuffle(loc); //打亂座標排序
+        chessBoard[loc.get(tmp)/10][loc.get(tmp)%10]=new Chess("將", 7, "Black", loc.get(tmp++));
+        chessBoard[loc.get(tmp)/10][loc.get(tmp)%10]=new Chess("帥", 7, "Red", loc.get(tmp++));
+        ... // 同上，只是改成其他棋子
+    }
+```
+* chessShow: 判斷該棋子是否已翻開
+```java
+boolean chessShow(int location){
+    currentChess=chessBoard[location/10][location%10];
+
+    if(currentChess.show){
+        return true; // 移動
+    }
+    else{
+        currentChess.show=true;
+        if(first==0)first++;
+        return false; // 翻開
+    }
+}
+```
+* checkInputCurrentChess: 檢查使用者的輸入是否符合規定
+```java
+boolean checkInputCurrentChess(String input, Player player){
+        if(input.length()!=2)return true;
+        int i=input.charAt(0)-'A', j=input.charAt(1)-'1';
+        if(i>3||j>7)return true;
+        if(first!=0&&chessBoard[i][j].show){
+            if(!chessBoard[i][j].getSide().equals(player.getSide()))return true;
+        }
+        if(!chessBoard[i][j].live)return true; // 死掉的不能選
+        return false;
+    }
+```
+### Main
+
+1. 先請兩位玩家輸入名稱
+2. 一號玩家翻開第一個棋子後，設定兩位玩家的陣營
+3. 建立防呆機制，避免使用者輸入錯誤 / 選錯棋子 / 選錯目的座標
+4. 選擇一個棋子並輸入錯誤目的座標後，輸入 esc 可重新選擇要移動的棋子
+5. 每完成一次移動，都會檢查遊戲是否能繼續
+```java
+public class Main {
+    public static void main(String[] args) {
+
+        System.out.println("暗棋遊戲");
+
+        Player[] players=new Player[2];
+        int p=0;
+        System.out.print("請輸入一號玩家名稱: ");
+        Scanner sc=new Scanner(System.in);
+        players[0]=new Player(sc.next());
+        System.out.print("請輸入二號玩家名稱: ");
+        players[1]=new Player(sc.next());
+
+        System.out.println("\n================== 遊戲開始 ====================");
+        ChessGame game=new ChessGame();
+        game.generateChess();
+
+        // 第一次選棋子決定玩家紅黑方
+        game.showAllChess();
+        System.out.printf("\n%s 請輸入所選棋子的位置: ", players[p++].getName());
+        String chessLoc=sc.next();
+        int i, j;
+        while(game.checkInputCurrentChess(chessLoc, players[0])){
+            System.out.print("\n錯誤，請重新輸入所選棋子的位置: ");
+            chessLoc=sc.next();
+        }
+        i=chessLoc.charAt(0)-'A';
+        j=chessLoc.charAt(1)-'1';
+        game.chessShow(i*10+j); // 翻棋
+        game.setPlayer(players[0], players[1]);
+
+        while(!game.gameOver()){
+            game.showAllChess();
+            System.out.printf("\n%s 請輸入所選棋子的位置: ", players[p].getName());
+            chessLoc=sc.next();
+            while(game.checkInputCurrentChess(chessLoc, players[p])){
+                System.out.print("\n錯誤，請重新輸入所選棋子的位置: ");
+                chessLoc=sc.next();
+            }
+            i=chessLoc.charAt(0)-'A';
+            j=chessLoc.charAt(1)-'1';
+            if(game.chessShow(i*10+j)){
+                System.out.printf("\n%s 請輸入目的位置: ", players[p].getName());
+                chessLoc=sc.next();
+                while(game.checkInputTarget(chessLoc, players[p])){
+                    System.out.print("\n錯誤，請重新輸入目的位置: ");
+                    chessLoc=sc.next();
+                }
+                i=chessLoc.charAt(0)-'A';
+                j=chessLoc.charAt(1)-'1';
+                while(!game.move(i*10+j)){
+                    System.out.print("\n無法移動到該位置，請重新輸入目的位置: ");
+                    chessLoc=sc.next();
+                    if(chessLoc.equals("esc")){
+                        p=1-p;
+                        break;
+                    }
+                    while(game.checkInputTarget(chessLoc, players[p])){
+                        System.out.print("\n錯誤，請重新輸入目的位置: ");
+                        chessLoc=sc.next();
+                    }
+                    i=chessLoc.charAt(0)-'A';
+                    j=chessLoc.charAt(1)-'1';
+                }
+            }
+
+            p=1-p; // 換另一個人下棋
+        }
+    }
+
+}
+```
+### 執行畫面
+* 遊戲一開始的畫面，以及一號玩家選擇翻開的棋子後，會開始顯示陣營 (紅方用中括號，黑方用大括號)
+
+    ![](img/遊戲開始.png)
+
+* 選錯棋子時，會觸發提醒，並要求重新輸入
+
+    ![](img/錯誤選擇.png)
+
+* 先輸入已翻開的棋子，可輸入要移動到哪裡
+
+    ![](img/移動棋子.png)
+
+* 輸入錯誤的移動會出現警告，並要求重新輸入
+
+    ![](img/錯誤移動.png)
+
+* 遊戲結束
+
+    ![](img/遊戲結束.png)
 
 # AI 使用狀況與心得
 

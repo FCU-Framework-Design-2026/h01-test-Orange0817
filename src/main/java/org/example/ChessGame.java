@@ -15,7 +15,7 @@ public class ChessGame extends AbstractGame {
     Chess currentChess, target;
     String playerSide="";
     Player[] p=new Player[2];
-//    String[] loc=new String[32];
+    //    String[] loc=new String[32];
     private ArrayList<Integer> loc=new ArrayList<>();
     public Chess[][] chessBoard=new Chess[4][8];
 //    ArrayList<ArrayList<Chess>> chessBoard=new ArrayList<>();
@@ -36,11 +36,9 @@ public class ChessGame extends AbstractGame {
     }
 
     boolean gameOver(){
-        int redChess=0, blackChess=0, moveSpace, redCannotMove=0, blackCannotMove=0;
-        int[] num={-1, 1, -10, 10};
+        int redChess=0, blackChess=0, x, y, xChess, yChess, redCannotMove=0, blackCannotMove=0;
         ArrayList<Chess> redLast=new ArrayList<>(); // 剩下的紅棋
         ArrayList<Chess> blackLast=new ArrayList<>(); // 剩下的黑棋
-
         for(int i=0;i<4;i++){
             for(int j=0;j<8;j++){
                 if(chessBoard[i][j].live){
@@ -68,12 +66,18 @@ public class ChessGame extends AbstractGame {
             return true;
         }
         else{
-            for(Chess r:redLast){
-                moveSpace=0;
-                for(int n:num){
-                    if(move(r.getLoc()+n))moveSpace++;
+            for(int i=0;i<redLast.size();i++){
+                if(redLast.get(i).getWeight()==2){
+                    x=redLast.get(i).loc/10;
+                    y=redLast.get(i).loc%10;
+                    xChess=0;
+                    yChess=0;
+                    for(int j=0;j<8;j++){
+                        if(j<4&&j!=x&&chessBoard[j][y].live)xChess++;
+                        if(j!=y&&chessBoard[x][j].live)yChess++;
+                    }
+                    if(xChess<2&&yChess<2)redCannotMove++;
                 }
-                if(moveSpace==0)redCannotMove++;
             }
             if(redCannotMove==redLast.size()){
                 System.out.println("Game Over!");
@@ -82,12 +86,18 @@ public class ChessGame extends AbstractGame {
                 return true;
             }
 
-            for(Chess b:blackLast){
-                moveSpace=0;
-                for(int n:num){
-                    if(move(b.getLoc()+n))moveSpace++;
+            for(int i=0;i<blackLast.size();i++){
+                if(blackLast.get(i).getWeight()==2){
+                    x=blackLast.get(i).loc/10;
+                    y=blackLast.get(i).loc%10;
+                    xChess=0;
+                    yChess=0;
+                    for(int j=0;j<8;j++){
+                        if(j<4&&j!=x&&chessBoard[j][y].live)xChess++;
+                        if(j!=y&&chessBoard[x][j].live)yChess++;
+                    }
+                    if(xChess<2&&yChess<2)blackCannotMove++;
                 }
-                if(moveSpace==0)blackCannotMove++;
             }
             if(blackCannotMove==blackLast.size()){
                 System.out.println("Game Over!");

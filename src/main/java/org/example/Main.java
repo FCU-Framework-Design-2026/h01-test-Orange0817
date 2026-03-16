@@ -27,10 +27,6 @@ public class Main {
         while(game.checkInputCurrentChess(chessLoc, players[0])){
             System.out.print("\n錯誤，請重新輸入所選棋子的位置: ");
             chessLoc=sc.next();
-            if(chessLoc.equals("esc")){
-                p=1-p;
-                break;
-            }
         }
         i=chessLoc.charAt(0)-'A';
         j=chessLoc.charAt(1)-'1';
@@ -44,10 +40,6 @@ public class Main {
             while(game.checkInputCurrentChess(chessLoc, players[p])){
                 System.out.print("\n錯誤，請重新輸入所選棋子的位置: ");
                 chessLoc=sc.next();
-                if(chessLoc.equals("esc")){
-                    p=1-p;
-                    break;
-                }
             }
             i=chessLoc.charAt(0)-'A';
             j=chessLoc.charAt(1)-'1';
